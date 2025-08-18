@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Centralized Firewall Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Centralized Firewall Dashboard</h1>
+    <nav>
+      <button onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('logs')">Logs</button>
+      <button onclick="showPage('rules')">Rules</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Dashboard Page -->
+    <section id="dashboard-page">
+      <h2>Welcome to the Firewall Dashboard</h2>
+      <p>Use the buttons above to navigate between Logs and Rules.</p>
+    </section>
+
+    <!-- Logs Page -->
+    <section id="logs-page" style="display:none;">
+      <h2>Firewall Logs</h2>
+      <div id="logs-container"></div>
+    </section>
+
+    <!-- Rules Page -->
+    <section id="rules-page" style="display:none;">
+      <h2>Firewall Rules</h2>
+
+      <!-- Add Rule Form -->
+      <div id="add-rule-form">
+        <h3>Add New Rule</h3>
+        <input type="text" id="rule-source" placeholder="Source">
+        <input type="text" id="rule-destination" placeholder="Destination">
+        <select id="rule-action">
+          <option value="allow">Allow</option>
+          <option value="deny">Deny</option>
+        </select>
+        <button onclick="addRule()">Add Rule</button>
+      </div>
+
+      <div id="rules-container"></div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/logsTable.js"></script>
+  <script src="js/rulesTable.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
