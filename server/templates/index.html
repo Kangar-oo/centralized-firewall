@@ -1,0 +1,18 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Firewall Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Centralized Firewall Dashboard</h1>
+    <nav>
+        <a href="/logs_page">View Logs</a>
+        <a href="/rules_page">View Rules</a>
+    </nav>
+    <div id="content"></div>
+</body>
+</html>
