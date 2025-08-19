@@ -1,29 +1,79 @@
 // Agent.go
-
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/xhhbbshbsj/centralized-firewall/agent/api"
+	"github.com/xhhbbshbsj/centralized-firewall/agent/config"
+	"github.com/xhhbbshbsj/centralized-firewall/agent/enforcer"
+	"github.com/xhhbbshbsj/centralized-firewall/agent/monitor"
+	"github.com/xhhbbshbsj/centralized-firewall/agent/rules"
+)
+
+var (
+	version = "dev"
 )
 
 func main() {
-	fmt.Println("🚀 Starting Firewall Agent...")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println("🚀 Starting Firewall Agent v" + version)
 
-	// Load rules from server (for now static)
-	LoadRules()
+	// Load configuration
+	log.Println("Loading configuration...")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("❌ Failed to load configuration: %v", err)
+	}
+	log.Printf("✅ Configuration loaded: %+v", cfg)
 
-	// Start packet monitor in goroutine
-	go StartPacketMonitor("eth0") // change eth0 to your interface
+	// Initialize API client
+	log.Println("Initializing API client...")
+	apiClient := api.NewClient(cfg)
 
-	// Start enforcement engine
-	go StartEnforcer()
+	// Authenticate with the server
+	log.Println("Authenticating with server...")
+	if err := apiClient.Login(cfg.AgentID, cfg.AgentSecret); err != nil {
+		log.Fatalf("❌ Authentication failed: %v", err)
+	}
+	log.Println("✅ Successfully authenticated with the server")
 
-	// Graceful shutdown on Ctrl+C
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	<-stop
-	fmt.Println("\n🛑 Firewall Agent stopped")
+	// Initialize rule manager
+	log.Println("Initializing rule manager...")
+	ruleManager := rules.NewRuleManager(apiClient)
+
+	// Start rule synchronization in background
+	log.Println("Starting rule synchronization...")
+	go ruleManager.StartSync(30 * time.Second)
+
+	// Start packet monitor
+	log.Printf("Starting packet monitor on interface: %s...", cfg.Interface)
+	packetChan, err := monitor.StartPacketMonitor(cfg.Interface)
+	if err != nil {
+		log.Fatalf("❌ Failed to start packet monitor: %v", err)
+	}
+	log.Println("✅ Packet monitor started successfully")
+
+	// Start enforcer
+	log.Println("Starting enforcer...")
+	enf := enforcer.NewEnforcer(ruleManager, packetChan, apiClient)
+	go enf.Start()
+	log.Println("✅ Enforcer started successfully")
+
+	// Wait for shutdown signal
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Block until we receive a signal
+	sig := <-sigChan
+	log.Printf("\n🛑 Received %v, shutting down...", sig)
+
+	// Perform cleanup
+	enf.Stop()
+
+	log.Println("✅ Firewall Agent stopped gracefully")
 }
