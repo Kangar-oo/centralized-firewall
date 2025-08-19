@@ -173,6 +173,3 @@ docker-compose logs -f
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-## 📞 Support
-
-For support, please open an issue or email support@yourcompany.com
