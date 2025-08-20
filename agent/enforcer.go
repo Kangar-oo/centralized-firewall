@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"centralized-firewall/agent/api"
-	"centralized-firewall/agent/config"
+	// "centralized-firewall/agent/config"
 
 	"github.com/google/gopacket"
 )

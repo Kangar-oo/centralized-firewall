@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models.db import db, Rule, User
-from services.security_service import admin_required, log_activity
+from server.models.db import db, Rule, User
+from server.services.security_service import admin_required, log_activity
 import json
 
 rules_bp = Blueprint('rules', __name__)

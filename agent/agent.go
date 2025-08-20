@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xhhbbshbsj/centralized-firewall/agent/api"
-	"github.com/xhhbbshbsj/centralized-firewall/agent/config"
-	"github.com/xhhbbshbsj/centralized-firewall/agent/enforcer"
-	"github.com/xhhbbshbsj/centralized-firewall/agent/monitor"
-	"github.com/xhhbbshbsj/centralized-firewall/agent/rules"
+	"centralized-firewall/agent/api"
+	"centralized-firewall/agent/config"
+	"centralized-firewall/agent/enforcer"
+	"centralized-firewall/agent/monitor"
+	"centralized-firewall/agent/rules"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xhhbbshbsj/centralized-firewall/agent/api"
+	"centralized-firewall/agent/api"
 )
 
 type RuleManager struct {

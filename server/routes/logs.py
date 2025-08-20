@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
-from models.db import db, Log, User, Rule
-from services.security_service import admin_required, log_activity
+from server.models.db import db, Log, User, Rule
+from server.services.security_service import admin_required, log_activity
 from datetime import datetime, timedelta
 import json
 

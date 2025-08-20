@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xhhbbshbsj/centralized-firewall/agent/config"
+	"centralized-firewall/agent/config"
 )
 
 type Client struct {

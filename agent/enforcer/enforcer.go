@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/xhhbbshbsj/centralized-firewall/agent/api"
-	"github.com/xhhbbshbsj/centralized-firewall/agent/rules"
+	"centralized-firewall/agent/api"
+	"centralized-firewall/agent/rules"
 	"github.com/google/gopacket"
 )
 
