@@ -1,4 +1,5 @@
-// Agent.go
+// agent.go
+
 package main
 
 import (
@@ -38,7 +39,17 @@ func main() {
 	// Authenticate with the server
 	log.Println("Authenticating with server...")
 	if err := apiClient.Login(cfg.AgentID, cfg.AgentSecret); err != nil {
-		log.Fatalf("❌ Authentication failed: %v", err)
+		log.Printf("⚠️ Login failed: %v", err)
+		log.Println("➡️ Trying to register agent...")
+
+		if regErr := apiClient.Register(cfg.AgentID, cfg.AgentSecret); regErr != nil {
+			log.Fatalf("❌ Registration failed: %v", regErr)
+		}
+
+		log.Println("✅ Registration successful, logging in again...")
+		if loginErr := apiClient.Login(cfg.AgentID, cfg.AgentSecret); loginErr != nil {
+			log.Fatalf("❌ Login failed even after registration: %v", loginErr)
+		}
 	}
 	log.Println("✅ Successfully authenticated with the server")
 

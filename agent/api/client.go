@@ -1,3 +1,4 @@
+// client.go
 package api
 
 import (
@@ -35,16 +36,26 @@ type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
+type RegisterRequest struct {
+	AgentID     string `json:"agent_id"`
+	AgentSecret string `json:"agent_secret"`
+}
+
+type RegisterResponse struct {
+	Message string `json:"message"`
+	Status  string `json:"status"`
+}
+
 type Rule struct {
-	ID              int     `json:"id"`
-	Name           string  `json:"name"`
-	SourceIP       *string `json:"source_ip,omitempty"`
-	SourcePort     *string `json:"source_port,omitempty"`
-	DestinationIP  *string `json:"destination_ip,omitempty"`
-	DestinationPort *string `json:"destination_port,omitempty"`
-	Protocol       *string `json:"protocol,omitempty"`
-	Action         string  `json:"action"`
-	IsActive       bool    `json:"is_active"`
+	ID               int     `json:"id"`
+	Name             string  `json:"name"`
+	SourceIP         *string `json:"source_ip,omitempty"`
+	SourcePort       *string `json:"source_port,omitempty"`
+	DestinationIP    *string `json:"destination_ip,omitempty"`
+	DestinationPort  *string `json:"destination_port,omitempty"`
+	Protocol         *string `json:"protocol,omitempty"`
+	Action           string  `json:"action"`
+	IsActive         bool    `json:"is_active"`
 }
 
 func (c *Client) Login(agentID, agentSecret string) error {
@@ -60,6 +71,25 @@ func (c *Client) Login(agentID, agentSecret string) error {
 	}
 
 	c.token = loginResp.AccessToken
+	return nil
+}
+
+func (c *Client) Register(agentID, agentSecret string) error {
+	regReq := RegisterRequest{
+		AgentID:     agentID,
+		AgentSecret: agentSecret,
+	}
+
+	var regResp RegisterResponse
+	err := c.doRequest("POST", "/api/v1/agent/register", regReq, &regResp)
+	if err != nil {
+		return fmt.Errorf("registration failed: %w", err)
+	}
+
+	if regResp.Status != "success" {
+		return fmt.Errorf("registration unsuccessful: %s", regResp.Message)
+	}
+
 	return nil
 }
 

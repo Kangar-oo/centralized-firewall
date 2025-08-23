@@ -1,3 +1,5 @@
+// rules/manager.go
+
 package rules
 
 import (
