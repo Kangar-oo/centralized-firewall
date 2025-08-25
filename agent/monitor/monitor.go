@@ -1,3 +1,5 @@
+// agent/monitor/monitor.go
+
 package monitor
 
 import (
@@ -6,14 +8,22 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
 type PacketMonitor struct {
-	iface      string
-	handle     *pcap.Handle
-	packetChan chan gopacket.Packet
-	done       chan struct{}
+	iface           string
+	handle          *pcap.Handle
+	packetChan      chan Packet
+	done            chan struct{}
+	SourceIP        string
+	DestinationIP   string
+	sourcePort      uint16
+	destinationPort uint16
+	Protocol        string
+	Payload         []byte
+	Timestamp       time.Time
 }
 
 func NewPacketMonitor(iface string, snapshotLen int32, promisc bool, timeout time.Duration) (*PacketMonitor, error) {
@@ -28,24 +38,81 @@ func NewPacketMonitor(iface string, snapshotLen int32, promisc bool, timeout tim
 		log.Printf("Warning: Could not set BPF filter: %v", err)
 	}
 
+	Packet := 0
 	return &PacketMonitor{
 		iface:      iface,
 		handle:     handle,
-		packetChan: make(chan gopacket.Packet, 1000), // Buffer up to 1000 packets
+		packetChan: make(chan Packet, 1000), // Buffer up to 1000 packets
 		done:       make(chan struct{}),
 	}, nil
 }
 
-func (m *PacketMonitor) Start() (<-chan gopacket.Packet, error) {
+func (m *PacketMonitor) Start() (<-chan Packet, error) {
 	// Create a new packet data source
 	packetSource := gopacket.NewPacketSource(m.handle, m.handle.LinkType())
+	for {
+		select {
+		case packet, ok := <-packetSource.Packets():
+			if !ok {
+				return nil, nil
+			}
+			var p Packet
+			p.Timestamp = packet.Metadata().Timestamp
+
+			//Extract IPv4 or IPv6
+			if ip4 := packet.Layer(layers.LayerTypeIPv4); ip4 != nil {
+				ip := ip4.(*layers.IPv4)
+				p.SourceIP = ip.SrcIP.String()
+				p.DestinationIP = ip.DstIP.String()
+			} else if ip6 := packet.Layer(layers.LayerTypeIPv6); ip6 != nil {
+				ip := ip6.(*layers.IPv6)
+				p.SourceIP = ip.SrcIP.String()
+				p.DestinationIP = ip.DstIP.String()
+			}
+
+			// Extract TCP or UDP
+			if tcp := packet.Layer(layers.LayerTypeTCP); tcp != nil {
+				t := tcp.(*layers.TCP)
+				p.SourcePort = uint16(t.SrcPort)
+				p.DestinationPort = uint16(t.DstPort)
+				p.Protocol = "TCP"
+				p.Payload = t.Payload
+			} else if udp := packet.Layer(layers.LayerTypeUDP); udp != nil {
+				u := udp.(*layers.UDP)
+				p.SourcePort = uint16(u.SrcPort)
+				p.DestinationPort = uint16(u.DstPort)
+				p.Protocol = "UDP"
+				p.Payload = u.Payload
+			} else if icmp := packet.Layer(layers.LayerTypeICMPv4); icmp != nil {
+				p.Protocol = "ICMP"
+				p.Payload = icmp.LayerContents()
+			} else {
+				p.Protocol = "Other"
+			}
+
+			// structure the packet
+			if len(p.Payload) > 256 {
+				p.Payload = p.Payload[:256]
+			}
+
+			// Send structured packet
+			select {
+			case m.packetChan <- p:
+			case <-m.done:
+				return nil, nil
+
+			}
+		case <-m.done:
+			return nil, nil
+		}
+	}
 	packetSource.NoCopy = true
 	packetSource.Lazy = true
 
 	// Start a goroutine to read packets
 	go func() {
 		defer close(m.packetChan)
-		
+
 		for {
 			select {
 			case packet, ok := <-packetSource.Packets():
